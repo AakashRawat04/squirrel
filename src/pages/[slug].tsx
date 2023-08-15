@@ -1,6 +1,25 @@
 import Head from "next/head";
 import { api } from "~/utils/api";
 import Image from "next/image";
+import { PostView } from "~/components/postview";
+
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.posts.getPostsByUserId.useQuery({
+    userId: props.userId,
+  });
+
+  if (isLoading) return <LoadingPage />;
+
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
 
 type ProfilePageProps = {
   username: string;
@@ -35,6 +54,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           data.username ?? "unknown"
         }`}</div>
         <div className="w-full border-b border-slate-400" />
+        <ProfileFeed userId={data.id} />
       </PageLayout>
     </>
   );
@@ -47,6 +67,7 @@ import { type AppRouter } from "~/server/api/root";
 import { type GetStaticProps } from "next";
 import { prisma } from "~/server/db";
 import { PageLayout } from "~/components/layout";
+import { LoadingPage } from "~/components/loading";
 
 const proxyClient = createTRPCProxyClient<AppRouter>({
   links: [
